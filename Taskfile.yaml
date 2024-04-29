@@ -1,0 +1,80 @@
+version: "3"
+
+env:
+  IMAGE_SIGNED: docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+  NAMESPACE: vienna-devops-meetup
+
+tasks:
+  build-sign-keyless:
+    cmds:
+      - docker buildx build --push -t {{.IMAGE_SIGNED}} app/
+      - crane cp {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}} {{.IMAGE_SIGNED}}
+      - cosign sign {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}} -a signedFor="Vienna DevOps Meetup" -a Date="{{.DATE}}" -a signedBy={{.USER}} -a signingMode=keyless-github
+    vars:
+      SRC_DIGEST:
+        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+      DATE:
+        sh: date
+      USER:
+        sh: whoami
+
+  build-sign-with-key:
+    cmds:
+      - docker buildx build --push -t {{.IMAGE_SIGNED}} app/
+      - crane cp {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}} {{.IMAGE_SIGNED}}
+      - cosign sign --tlog-upload=false --key cosign.key {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}} -a signedFor="Vienna DevOps Meetup" -a Date="{{.DATE}}" -a signedBy={{.USER}} -a signingMode=key-pair-local
+    vars:
+      SRC_DIGEST:
+        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+      DATE:
+        sh: date
+      USER:
+        sh: whoami
+
+  verify-keyless:
+    cmds:
+      - cosign verify {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}} --certificate-identity=hasan.hakkaev@gmx.at --certificate-oidc-issuer=https://github.com/login/oauth | jq .
+    vars:
+      SRC_DIGEST:
+        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+
+  verify-with-key:
+    cmds:
+      - cosign verify --insecure-ignore-tlog=true --key cosign.pub  {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}}  | jq .
+    vars:
+      SRC_DIGEST:
+        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+
+  generate-key:
+    run: once
+    cmds:
+      - cosign generate-key-pair
+      - kubectl create secret generic cosignsecret -n cosign-system --from-file=cosign.pub=./cosign.pub
+    generates:
+      - cosign.key
+      - cosign.pub
+
+  deploy-signed:
+    cmds:
+      - kustomize build deployment | kubectl apply -f -
+
+  deploy-unsigned:
+    cmds:
+      - kubectl apply -k github.com/stefanprodan/podinfo//kustomize --namespace={{.NAMESPACE}}
+
+  undeploy:
+    cmds:
+      - kubectl delete ns vienna-devops-meetup
+
+  cluster-up:
+    cmds:
+      - kind create cluster --config ~/workspace/kind/config.yaml
+      - helm repo add sigstore https://sigstore.github.io/helm-charts
+      - helm repo update
+      - kubectl create namespace cosign-system
+      - helm install policy-controller -n cosign-system sigstore/policy-controller --devel
+      - kubectl apply -f policy-controller/policy-key.yaml
+
+  cluster-down:
+    cmds:
+      - kind delete cluster

@@ -1,0 +1,13 @@
+apiVersion: policy.sigstore.dev/v1beta1
+kind: ClusterImagePolicy
+metadata:
+  name: cip-keyless
+spec:
+  mode: enforce
+  images:
+    - glob: "**"
+  authorities:
+    keyless:
+      identities:
+        - issuer: https://github.com/login/oauth
+          subject: hasan.hakkaev@gmx.at

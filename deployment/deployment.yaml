@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vienna-devops-meetup
+  namespace: vienna-devops-meetup
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vienna-devops-meetup
+  template:
+    metadata:
+      labels:
+        app: vienna-devops-meetup
+    spec:
+      containers:
+        - name: vienna-devops-meetup
+          image: docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+          ports:
+            - containerPort: 8080
