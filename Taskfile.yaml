@@ -64,7 +64,7 @@ tasks:
 
   undeploy:
     cmds:
-      - kubectl delete ns vienna-devops-meetup
+      - kubectl delete deployment vienna-devops-meetup --namespace={{.NAMESPACE}}
 
   cluster-up:
     cmds:
@@ -73,7 +73,6 @@ tasks:
       - helm repo update
       - kubectl create namespace cosign-system
       - helm install policy-controller -n cosign-system sigstore/policy-controller --devel
-      - kubectl apply -f policy-controller/policy-key.yaml
 
   cluster-down:
     cmds:

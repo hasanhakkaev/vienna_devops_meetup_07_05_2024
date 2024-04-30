@@ -1,13 +1,20 @@
-apiVersion: policy.sigstore.dev/v1beta1
+apiVersion: policy.sigstore.dev/v1alpha1
 kind: ClusterImagePolicy
 metadata:
   name: cip-keyless
 spec:
-  mode: enforce
   images:
+    # All images in example repository matched
     - glob: "**"
   authorities:
-    keyless:
-      identities:
-        - issuer: https://github.com/login/oauth
-          subject: hasan.hakkaev@gmx.at
+    - keyless:
+        # Signed by the public Fulcio certificate authority
+        url: https://fulcio.sigstore.dev
+        identities:
+          # Matches the Github Actions OIDC issuer
+          - issuer: https://github.com/login/oauth
+            # Matches a specific github workflow on main branch. Here we use the
+            # sigstore policy controller example testing workflow as an example.
+            subject: "hasan.hakkaev@gmx.at"
+      ctlog:
+        url: https://rekor.sigstore.dev
