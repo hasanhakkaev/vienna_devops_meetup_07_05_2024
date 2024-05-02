@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
         - name: vienna-devops-meetup
-          image: docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+          image: docker.io/hhakkaev811/vienna-devops-meetup-demo
           ports:
             - containerPort: 8080

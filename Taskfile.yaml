@@ -1,18 +1,18 @@
 version: "3"
 
 env:
-  IMAGE_SIGNED: docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+  IMAGE: docker.io/hhakkaev811/vienna-devops-meetup-demo
   NAMESPACE: vienna-devops-meetup
 
 tasks:
   build-sign-keyless:
     cmds:
-      - docker buildx build --push -t {{.IMAGE_SIGNED}} app/
-      - crane cp {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}} {{.IMAGE_SIGNED}}
-      - cosign sign {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}} -a signedFor="Vienna DevOps Meetup" -a Date="{{.DATE}}" -a signedBy={{.USER}} -a signingMode=keyless-github
+      - docker buildx build --push -t {{.IMAGE}} app/
+      - crane cp {{.IMAGE}}@{{.SRC_DIGEST}} {{.IMAGE}}
+      - cosign sign {{.IMAGE}}@{{.SRC_DIGEST}} -a signedFor="Vienna DevOps Meetup" -a Date="{{.DATE}}" -a signedBy={{.USER}} -a signingMode=keyless-github
     vars:
       SRC_DIGEST:
-        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo
       DATE:
         sh: date
       USER:
@@ -20,12 +20,12 @@ tasks:
 
   build-sign-with-key:
     cmds:
-      - docker buildx build --push -t {{.IMAGE_SIGNED}} app/
-      - crane cp {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}} {{.IMAGE_SIGNED}}
-      - cosign sign --tlog-upload=false --key cosign.key {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}} -a signedFor="Vienna DevOps Meetup" -a Date="{{.DATE}}" -a signedBy={{.USER}} -a signingMode=key-pair-local
+      - docker buildx build --push -t {{.IMAGE}} app/
+      - crane cp {{.IMAGE}}@{{.SRC_DIGEST}} {{.IMAGE}}
+      - cosign sign --tlog-upload=false --key cosign.key {{.IMAGE}}@{{.SRC_DIGEST}} -a signedFor="Vienna DevOps Meetup" -a Date="{{.DATE}}" -a signedBy={{.USER}} -a signingMode=key-pair-local
     vars:
       SRC_DIGEST:
-        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo
       DATE:
         sh: date
       USER:
@@ -33,17 +33,17 @@ tasks:
 
   verify-keyless:
     cmds:
-      - cosign verify {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}} --certificate-identity=hasan.hakkaev@gmx.at --certificate-oidc-issuer=https://github.com/login/oauth | jq .
+      - cosign verify {{.IMAGE}}@{{.SRC_DIGEST}} --certificate-identity=hasan.hakkaev@gmx.at --certificate-oidc-issuer=https://github.com/login/oauth | jq .
     vars:
       SRC_DIGEST:
-        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo
 
   verify-with-key:
     cmds:
-      - cosign verify --insecure-ignore-tlog=true --key cosign.pub  {{.IMAGE_SIGNED}}@{{.SRC_DIGEST}}  | jq .
+      - cosign verify --insecure-ignore-tlog=true --key cosign.pub  {{.IMAGE}}@{{.SRC_DIGEST}}  | jq .
     vars:
       SRC_DIGEST:
-        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo:signed
+        sh: crane digest docker.io/hhakkaev811/vienna-devops-meetup-demo
 
   generate-key:
     run: once
