@@ -11,10 +11,8 @@ spec:
         # Signed by the public Fulcio certificate authority
         url: https://fulcio.sigstore.dev
         identities:
-          # Matches the Github Actions OIDC issuer
+          # Matches the Github OIDC issuer
           - issuer: https://github.com/login/oauth
-            # Matches a specific github workflow on main branch. Here we use the
-            # sigstore policy controller example testing workflow as an example.
             subject: "hasan.hakkaev@gmx.at"
       ctlog:
         url: https://rekor.sigstore.dev
